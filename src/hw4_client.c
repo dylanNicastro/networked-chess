@@ -32,12 +32,9 @@ int main() {
         exit(EXIT_FAILURE);
     }
 
-    initialize_game(&game);
-    display_chessboard(&game);
-
-    while (1) {
-        // Fill this in
-    }
+    // while (1) {
+    //     // Fill this in
+    // }
 
     // Please ensure that the following lines of code execute just before your program terminates.
     // If necessary, copy and paste it to other parts of your code where you terminate your program.
