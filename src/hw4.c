@@ -280,7 +280,7 @@ int parse_move(const char *move, ChessMove *parsed_move) {
     if (strlen(move) == 5) {
         int src_row = move[1] - '0';
         int dest_row = move[3] - '0';
-        if (abs(src_row-dest_row) != 1) {
+        if ((src_row == 2 && dest_row == 1) == false && (src_row = 7 && dest_row == 8) == false) {
             return PARSE_MOVE_INVALID_DESTINATION;
         }
         else if (move[4] != 'q' && move[4] != 'r' && move[4] != 'b' && move[4] != 'n') {
