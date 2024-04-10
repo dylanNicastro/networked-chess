@@ -400,23 +400,22 @@ int load_game(ChessGame *game, const char *username, const char *db_filename, in
     char currentuser[BUFFER_SIZE];
     char fen[BUFFER_SIZE];
     while (fgets(line, sizeof(line), load) != NULL) {
-        sscanf(line, "%[^:]%*c%[^\n]s", currentuser, fen);
-        //printf("%s:%s\n", currentuser, fen);
-        if (strcmp(currentuser, username) == 0) {
-            current++;
-            if (current == save_number) {
-                break;
+        if (sscanf(line, "%[^:]%*c%[^\n]s", currentuser, fen) == 2) {
+            //printf("%s:%s\n", currentuser, fen);
+            if (strcmp(currentuser, username) == 0) {
+                current++;
+                if (current == save_number) {
+                    fclose(load);
+                    (*game).moveCount = 0;
+                    (*game).capturedCount = 0;
+                    fen_to_chessboard(fen, game);
+                    return 0;
+                }
             }
         }
     }
-    if (current != save_number) {
-        //printf("current %d != save_number %d\n", current, save_number);
-        return -1;
-    }
-    (*game).moveCount = 0;
-    (*game).capturedCount = 0;
-    fen_to_chessboard(fen, game);
-    return fclose(load);
+    fclose(load);
+    return -1;
 }
 
 void display_chessboard(ChessGame *game) {
