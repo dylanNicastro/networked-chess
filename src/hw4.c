@@ -142,6 +142,9 @@ bool is_valid_bishop_move(int src_row, int src_col, int dest_row, int dest_col, 
     else if (dest_row < src_row && dest_col < src_col) {
         // moving up+left
     }
+    (void)row_diff;
+    (void)col_diff;
+    (void)game;
     return false;
 }
 
