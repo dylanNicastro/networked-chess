@@ -54,13 +54,32 @@ void chessboard_to_fen(char fen[], ChessGame *game) {
 }
 
 bool is_valid_pawn_move(char piece, int src_row, int src_col, int dest_row, int dest_col, ChessGame *game) {
-    (void)piece;
-    (void)src_row;
-    (void)src_col;
-    (void)dest_row;
-    (void)dest_col;
-    (void)game;
-    return false;
+    int row_diff = abs(dest_row - src_row);
+    int col_diff = abs(dest_col - src_col);
+    if ((isupper(piece) && src_row < dest_row) || (islower(piece) && src_row > dest_row)) {
+        return false;
+    }
+    if ((row_diff == 1 && col_diff > 1) || (row_diff == 2 && col_diff != 0) || row_diff > 2) {
+        return false;
+    }
+    if (row_diff == 1 && col_diff == 0 && (*game).chessboard[dest_row][dest_col] != '.') {
+        return false;
+    }
+    if (row_diff == 1 && col_diff == 1 && (*game).chessboard[dest_row][dest_col] == '.') {
+        return false;
+    }
+    if (isupper(piece)) {
+        if (row_diff == 2 && ((*game).chessboard[dest_row][dest_col] != '.' || (*game).chessboard[dest_row+1][dest_col] != '.')) {
+            return false;
+        }
+    }
+    else if (islower(piece)) {
+        if (row_diff == 2 && ((*game).chessboard[dest_row][dest_col] != '.' || (*game).chessboard[dest_row-1][dest_col] != '.')) {
+            return false;
+        }
+    }
+    
+    return true;
 }
 
 bool is_valid_rook_move(int src_row, int src_col, int dest_row, int dest_col, ChessGame *game) {
@@ -123,37 +142,59 @@ bool is_valid_bishop_move(int src_row, int src_col, int dest_row, int dest_col, 
     //printf("Moving from [%d][%d] to [%d][%d]\n", src_row, src_col, dest_row, dest_col);
     int row_diff = abs(dest_row - src_row);
     int col_diff = abs(dest_col - src_col);
+    if (col_diff != row_diff) {
+        return false;
+    }
+    // 7,2 to 5,0
+    // 5 < 7, 0 < 2
     if (dest_row > src_row && dest_col > src_col) {
         // moving down+right
-        // for (int i = src_row+1; i < dest_row; i++) {
-        //     if ((*game).chessboard[i][src_col] != '.') {
-        //         //printf("%c found at [%d][%d]\n", (*game).chessboard[i][src_col], i, src_col);
-        //         return false;
-        //     }
-        // }
-        // return true;
+        for (int i = 1; i < row_diff; i++) {
+            if ((*game).chessboard[src_row+i][src_col+i] != '.') {
+                return false;
+            }
+        }
+        return true;
     }
     else if (dest_row < src_row && dest_col > src_col) {
         // moving up+right
+        for (int i = 1; i < row_diff; i++) {
+            if ((*game).chessboard[src_row-i][src_col+i] != '.') {
+                return false;
+            }
+        }
+        return true;
     }
     else if (dest_row > src_row && dest_col < src_col) {
         // moving down+left
+        for (int i = 1; i < row_diff; i++) {
+            if ((*game).chessboard[src_row+i][src_col-i] != '.') {
+                return false;
+            }
+        }
+        return true;
     }
     else if (dest_row < src_row && dest_col < src_col) {
         // moving up+left
+        for (int i = 1; i < row_diff; i++) {
+            if ((*game).chessboard[src_row-i][src_col-i] != '.') {
+                return false;
+            }
+        }
+        return true;
     }
-    (void)row_diff;
-    (void)col_diff;
-    (void)game;
     return false;
 }
 
 bool is_valid_queen_move(int src_row, int src_col, int dest_row, int dest_col, ChessGame *game) {
-    (void)src_row;
-    (void)src_col;
-    (void)dest_row;
-    (void)dest_col;
-    (void)game;
+    int row_diff = abs(dest_row - src_row);
+    int col_diff = abs(dest_col - src_col);
+    if ((row_diff > 0 && col_diff == 0) || (row_diff == 0 && col_diff > 0)) {
+        return is_valid_rook_move(src_row, src_col, dest_row, dest_col, game);
+    }
+    if (row_diff > 0 && col_diff > 0) {
+        return is_valid_bishop_move(src_row, src_col, dest_row, dest_col, game);
+    }
     return false;
 }
 
@@ -173,10 +214,23 @@ bool is_valid_move(char piece, int src_row, int src_col, int dest_row, int dest_
     if (src_row == dest_row && src_col == dest_col) {
         return false;
     }
-    (void)piece;
-    (void)src_row;
-    (void)src_col;
-    (void)game;
+    if ((*game).chessboard[src_row][src_col] == '.') {
+        return false;
+    }
+    int srcpiece = isupper(piece) != 0 ? WHITE_PLAYER : BLACK_PLAYER;
+    int destpiece = isupper((*game).chessboard[dest_row][dest_col]) != 0 ? WHITE_PLAYER : BLACK_PLAYER;
+    if (srcpiece == destpiece) {
+        return false;
+    }
+    switch (tolower(piece)) {
+        case 'p': return is_valid_pawn_move(piece, src_row, src_col, dest_row, dest_col, game);
+        case 'r': return is_valid_rook_move(src_row, src_col, dest_row, dest_col, game);
+        case 'n': return is_valid_knight_move(src_row, src_col, dest_row, dest_col);
+        case 'b': return is_valid_bishop_move(src_row, src_col, dest_row, dest_col, game);
+        case 'q': return is_valid_queen_move(src_row, src_col, dest_row, dest_col, game);
+        case 'k': return is_valid_king_move(src_row, src_col, dest_row, dest_col);
+        default: break;
+    }
     return false;
 }
 
