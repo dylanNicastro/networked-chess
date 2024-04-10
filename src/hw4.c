@@ -64,28 +64,84 @@ bool is_valid_pawn_move(char piece, int src_row, int src_col, int dest_row, int 
 }
 
 bool is_valid_rook_move(int src_row, int src_col, int dest_row, int dest_col, ChessGame *game) {
-    (void)src_row;
-    (void)src_col;
-    (void)dest_row;
-    (void)dest_col;
-    (void)game;
+    //printf("Moving from [%d][%d] to [%d][%d]\n", src_row, src_col, dest_row, dest_col);
+    int row_diff = abs(dest_row - src_row);
+    int col_diff = abs(dest_col - src_col);
+    if (dest_row > src_row && col_diff == 0) {
+        // moving down
+        for (int i = src_row+1; i < dest_row; i++) {
+            if ((*game).chessboard[i][src_col] != '.') {
+                //printf("%c found at [%d][%d]\n", (*game).chessboard[i][src_col], i, src_col);
+                return false;
+            }
+        }
+        return true;
+    }
+    else if (dest_row < src_row && col_diff == 0) {
+        // moving up
+        for (int i = src_row-1; i > dest_row; i--) {
+            if ((*game).chessboard[i][src_col] != '.') {
+                //printf("%c found at [%d][%d]\n", (*game).chessboard[i][src_col], i, src_col);
+                return false;
+            }
+        }
+        return true;
+    }
+    else if (row_diff == 0 && dest_col > src_col) {
+        // moving right
+        for (int i = src_col+1; i < dest_col; i++) {
+            if ((*game).chessboard[src_row][i] != '.') {
+                //printf("%c found at [%d][%d]\n", (*game).chessboard[src_row][i], src_row, i);
+                return false;
+            }
+        }
+        return true;
+    }
+    else if (row_diff == 0 && dest_col < src_col) {
+        // moving left
+        for (int i = src_col-1; i > dest_col; i--) {
+            if ((*game).chessboard[src_row][i] != '.') {
+                //printf("%c found at [%d][%d]\n", (*game).chessboard[src_row][i], src_row, i);
+                return false;
+            }
+        }
+        return true;
+    }
     return false;
 }
 
 bool is_valid_knight_move(int src_row, int src_col, int dest_row, int dest_col) {
-    (void)src_row;
-    (void)src_col;
-    (void)dest_row;
-    (void)dest_col;
+    int row_diff = abs(dest_row - src_row);
+    int col_diff = abs(dest_col - src_col);
+    if ((row_diff == 2 && col_diff == 1) || (row_diff == 1 && col_diff == 2)) {
+        return true;
+    }
     return false;
 }
 
 bool is_valid_bishop_move(int src_row, int src_col, int dest_row, int dest_col, ChessGame *game) {
-    (void)src_row;
-    (void)src_col;
-    (void)dest_row;
-    (void)dest_col;
-    (void)game;
+    //printf("Moving from [%d][%d] to [%d][%d]\n", src_row, src_col, dest_row, dest_col);
+    int row_diff = abs(dest_row - src_row);
+    int col_diff = abs(dest_col - src_col);
+    if (dest_row > src_row && dest_col > src_col) {
+        // moving down+right
+        // for (int i = src_row+1; i < dest_row; i++) {
+        //     if ((*game).chessboard[i][src_col] != '.') {
+        //         //printf("%c found at [%d][%d]\n", (*game).chessboard[i][src_col], i, src_col);
+        //         return false;
+        //     }
+        // }
+        // return true;
+    }
+    else if (dest_row < src_row && dest_col > src_col) {
+        // moving up+right
+    }
+    else if (dest_row > src_row && dest_col < src_col) {
+        // moving down+left
+    }
+    else if (dest_row < src_row && dest_col < src_col) {
+        // moving up+left
+    }
     return false;
 }
 
@@ -99,19 +155,24 @@ bool is_valid_queen_move(int src_row, int src_col, int dest_row, int dest_col, C
 }
 
 bool is_valid_king_move(int src_row, int src_col, int dest_row, int dest_col) {
-    (void)src_row;
-    (void)src_col;
-    (void)dest_row;
-    (void)dest_col;
+    int row_diff = abs(dest_row - src_row);
+    int col_diff = abs(dest_col - src_col);
+    if (row_diff <= 1 && col_diff <= 1) {
+        return true;
+    }
     return false;
 }
 
 bool is_valid_move(char piece, int src_row, int src_col, int dest_row, int dest_col, ChessGame *game) {
+    if (dest_row < 0 || dest_row > 7 || dest_col < 0 || dest_col > 7) {
+        return false;
+    }
+    if (src_row == dest_row && src_col == dest_col) {
+        return false;
+    }
     (void)piece;
     (void)src_row;
     (void)src_col;
-    (void)dest_row;
-    (void)dest_col;
     (void)game;
     return false;
 }
@@ -188,7 +249,7 @@ int save_game(ChessGame *game, const char *username, const char *db_filename) {
     if (save == NULL) {
         return -1;
     }
-    char fen[200];
+    char fen[BUFFER_SIZE];
     chessboard_to_fen(fen, game);
     fprintf(save, "%s:%s\n", username, fen);
     return fclose(save);
@@ -201,10 +262,10 @@ int load_game(ChessGame *game, const char *username, const char *db_filename, in
         printf("File not found\n");
         return -1;
     }
-    char line[305]; 
+    char line[BUFFER_SIZE]; 
     int current = 0;
-    char currentuser[100];
-    char fen[200];
+    char currentuser[BUFFER_SIZE];
+    char fen[BUFFER_SIZE];
     while (fgets(line, sizeof(line), load) != NULL) {
         sscanf(line, "%[^:]%*c%[^\n]s", currentuser, fen);
         //printf("%s:%s\n", currentuser, fen);
