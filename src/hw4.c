@@ -386,13 +386,16 @@ int save_game(ChessGame *game, const char *username, const char *db_filename) {
 }
 
 int load_game(ChessGame *game, const char *username, const char *db_filename, int save_number) {
+    if (save_number < 1) {
+        return -1;
+    }
     FILE *load;
     load = fopen(db_filename, "r");
     if (load == NULL) {
-        printf("File not found\n");
+        //printf("File not found\n");
         return -1;
     }
-    char line[BUFFER_SIZE]; 
+    char line[BUFFER_SIZE];
     int current = 0;
     char currentuser[BUFFER_SIZE];
     char fen[BUFFER_SIZE];
@@ -407,13 +410,13 @@ int load_game(ChessGame *game, const char *username, const char *db_filename, in
         }
     }
     if (current != save_number) {
-        printf("current %d != save_number %d\n", current, save_number);
+        //printf("current %d != save_number %d\n", current, save_number);
         return -1;
     }
     (*game).moveCount = 0;
     (*game).capturedCount = 0;
     fen_to_chessboard(fen, game);
-    return 0;
+    return fclose(load);
 }
 
 void display_chessboard(ChessGame *game) {
