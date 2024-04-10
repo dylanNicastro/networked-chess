@@ -413,7 +413,7 @@ int load_game(ChessGame *game, const char *username, const char *db_filename, in
     (*game).moveCount = 0;
     (*game).capturedCount = 0;
     fen_to_chessboard(fen, game);
-    return 0;
+    return fclose(load);
 }
 
 void display_chessboard(ChessGame *game) {
