@@ -208,18 +208,7 @@ bool is_valid_king_move(int src_row, int src_col, int dest_row, int dest_col) {
 }
 
 bool is_valid_move(char piece, int src_row, int src_col, int dest_row, int dest_col, ChessGame *game) {
-    if (dest_row < 0 || dest_row > 7 || dest_col < 0 || dest_col > 7) {
-        return false;
-    }
     if (src_row == dest_row && src_col == dest_col) {
-        return false;
-    }
-    if ((*game).chessboard[src_row][src_col] == '.') {
-        return false;
-    }
-    int srcpiece = isupper(piece) != 0 ? WHITE_PLAYER : BLACK_PLAYER;
-    int destpiece = isupper((*game).chessboard[dest_row][dest_col]) != 0 ? WHITE_PLAYER : BLACK_PLAYER;
-    if (srcpiece == destpiece) {
         return false;
     }
     switch (tolower(piece)) {
@@ -304,11 +293,65 @@ int parse_move(const char *move, ChessMove *parsed_move) {
 }
 
 int make_move(ChessGame *game, ChessMove *move, bool is_client, bool validate_move) {
-    (void)game;
-    (void)move;
-    (void)is_client;
-    (void)validate_move;
-    return -999;
+    int src_row = (*move).startSquare[1]-'0'-1;
+    src_row = 7-src_row;
+    int dest_row = (*move).endSquare[1]-'0'-1;
+    dest_row = 7-dest_row;
+    int src_col = (*move).startSquare[0]-'a';
+    int dest_col = (*move).endSquare[0]-'a';
+    char piece = (*game).chessboard[src_row][src_col];
+    char promotion_type = (*move).endSquare[2];
+
+    //printf("src: [%d][%d], dest: [%d][%d]\n", src_row, src_col, dest_row, dest_col);
+
+    if (validate_move == true) {
+        // is_client == true/1 means white is trying to play, currentPlayer == 1 means black's turn
+        if (is_client == (*game).currentPlayer) {
+            return MOVE_OUT_OF_TURN;
+        }
+        if ((*game).chessboard[src_row][src_col] == '.') {
+            return MOVE_NOTHING;
+        }
+        if (((*game).currentPlayer == WHITE_PLAYER && isupper((*game).chessboard[src_row][src_col]) == 0) ||
+            ((*game).currentPlayer == BLACK_PLAYER && islower((*game).chessboard[src_row][src_col]) == 0)) {
+            return MOVE_WRONG_COLOR;
+        }
+        if (((*game).currentPlayer == WHITE_PLAYER && (*game).chessboard[dest_row][dest_col] != '.' && islower((*game).chessboard[dest_row][dest_col]) == 0) ||
+            ((*game).currentPlayer == BLACK_PLAYER && (*game).chessboard[dest_row][dest_col] != '.' && isupper((*game).chessboard[dest_row][dest_col]) == 0)) {
+            return MOVE_SUS;
+        }
+        if ((int)strlen((*move).endSquare) == 3 && tolower(piece) != 'p') {
+            return MOVE_NOT_A_PAWN;
+        }
+        if ((int)strlen((*move).endSquare) == 2 && ((dest_row == 0 && piece == 'P') || (dest_row == 7 && piece == 'p'))) {
+            return MOVE_MISSING_PROMOTION;
+        }
+        if (is_valid_move(piece, src_row, src_col, dest_row, dest_col, game) == false) {
+            return MOVE_WRONG;
+        }
+    }
+
+
+    (*game).chessboard[src_row][src_col] = '.';
+    if ((*game).chessboard[dest_row][dest_col] != '.') {
+        (*game).capturedPieces[(*game).capturedCount] = (*game).chessboard[dest_row][dest_col];
+        (*game).capturedCount++;
+    }
+    if ((*game).currentPlayer == WHITE_PLAYER) {
+        if (dest_row == 0 && piece == 'P') {
+            piece = toupper(promotion_type);
+        }
+    }
+    else {
+        if (dest_row == 7 && piece == 'p') {
+            piece = promotion_type;
+        }
+    }
+    (*game).chessboard[dest_row][dest_col] = piece;
+    (*game).moves[(*game).moveCount] = *move;
+    (*game).moveCount++;
+    (*game).currentPlayer = (*game).currentPlayer == WHITE_PLAYER ? BLACK_PLAYER : WHITE_PLAYER;
+    return 0;
 }
 
 int send_command(ChessGame *game, const char *message, int socketfd, bool is_client) {
