@@ -355,19 +355,76 @@ int make_move(ChessGame *game, ChessMove *move, bool is_client, bool validate_mo
 }
 
 int send_command(ChessGame *game, const char *message, int socketfd, bool is_client) {
-    (void)game;
-    (void)message;
-    (void)socketfd;
-    (void)is_client;
-    return -999;
+    char command[BUFFER_SIZE];
+    char arg[BUFFER_SIZE];
+    sscanf(message, "/%s %[^\n]s", command, arg);
+    //printf("%s\n%s\n", command, arg);
+    if (strcmp(command, "move") == 0) {
+        ChessMove new_move;
+        if (parse_move(arg, &new_move) != 0) return COMMAND_ERROR;
+        if (make_move(game, &new_move, is_client, true) != 0) return COMMAND_ERROR;
+        send(socketfd, message, strlen(message), 0);
+        return COMMAND_MOVE;
+    }
+    else if (strcmp(command, "forfeit") == 0) {
+        send(socketfd, message, strlen(message), 0);
+        return COMMAND_FORFEIT;
+    }
+    else if (strcmp(command, "chessboard") == 0) {
+        display_chessboard(game);
+        return COMMAND_DISPLAY;
+    }
+    else if (strcmp(command, "import") == 0) {
+        if (is_client == false) {
+            fen_to_chessboard(arg, game);
+            send(socketfd, message, strlen(message), 0);
+            return COMMAND_IMPORT;
+        }
+        return COMMAND_ERROR;
+    }
+    else if (strcmp(command, "load") == 0) {
+        char name[BUFFER_SIZE];
+        int num;
+        if (sscanf(arg, "%s %d", name, &num) != 2) return COMMAND_ERROR;
+        if (load_game(game, name, "game_database.txt", num) != 0) return COMMAND_ERROR;
+        return COMMAND_LOAD;
+    }
+    else if (strcmp(command, "save") == 0) {
+        if (save_game(game, arg, "game_database.txt") != 0) return COMMAND_ERROR;
+        return COMMAND_SAVE;
+    }
+    return COMMAND_UNKNOWN;
 }
 
 int receive_command(ChessGame *game, const char *message, int socketfd, bool is_client) {
-    (void)game;
-    (void)message;
-    (void)socketfd;
-    (void)is_client;
-    return -999;
+    char command[BUFFER_SIZE];
+    char arg[BUFFER_SIZE];
+    sscanf(message, "/%s %[^\n]s", command, arg);
+    //printf("%s\n%s\n", command, arg);
+    if (strcmp(command, "move") == 0) {
+        ChessMove new_move;
+        if (parse_move(arg, &new_move) != 0) return COMMAND_ERROR;
+        if (make_move(game, &new_move, is_client, false) != 0) return COMMAND_ERROR;
+        return COMMAND_MOVE;
+    }
+    else if (strcmp(command, "forfeit") == 0) {
+        close(socketfd);
+        return COMMAND_FORFEIT;
+    }
+    else if (strcmp(command, "import") == 0) {
+        if (is_client == true) {
+            fen_to_chessboard(arg, game);
+            return COMMAND_IMPORT;
+        }
+    }
+    else if (strcmp(command, "load") == 0) {
+        char name[BUFFER_SIZE];
+        int num;
+        if (sscanf(arg, "%s %d", name, &num) != 2) return COMMAND_ERROR;
+        if (load_game(game, name, "game_database.txt", num) != 0) return COMMAND_ERROR;
+        return COMMAND_LOAD;
+    }
+    return -1;
 }
 
 int save_game(ChessGame *game, const char *username, const char *db_filename) {
