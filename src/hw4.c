@@ -268,9 +268,39 @@ void fen_to_chessboard(const char *fen, ChessGame *game) {
 }
 
 int parse_move(const char *move, ChessMove *parsed_move) {
-    (void)move;
-    (void)parsed_move;
-    return -999;
+    if ((int)strlen(move) != 4 && (int)strlen(move) != 5) {
+        return PARSE_MOVE_INVALID_FORMAT;
+    }
+    if (move[0] < 'a' || move[0] > 'h' || move[2] < 'a' || move[2] > 'h') {
+        return PARSE_MOVE_INVALID_FORMAT;
+    }
+    if (move[1] < '1' || move[1] > '8' || move[3] < '1' || move[3] > '8') {
+        return PARSE_MOVE_OUT_OF_BOUNDS;
+    }
+    if (strlen(move) == 5) {
+        int src_row = move[1] - '0';
+        int dest_row = move[3] - '0';
+        if (abs(src_row-dest_row) != 1) {
+            return PARSE_MOVE_INVALID_DESTINATION;
+        }
+        else if (move[4] != 'q' && move[4] != 'r' && move[4] != 'b' && move[4] != 'n') {
+            return PARSE_MOVE_INVALID_PROMOTION;
+        }
+        else {
+            (*parsed_move).endSquare[2] = move[4];
+            (*parsed_move).endSquare[3] = '\0';
+        }
+    }
+    else {
+
+        (*parsed_move).endSquare[2] = '\0';
+    }
+    (*parsed_move).startSquare[0] = move[0];
+    (*parsed_move).startSquare[1] = move[1];
+    (*parsed_move).startSquare[2] = '\0';
+    (*parsed_move).endSquare[0] = move[2];
+    (*parsed_move).endSquare[1] = move[3];
+    return 0;
 }
 
 int make_move(ChessGame *game, ChessMove *move, bool is_client, bool validate_move) {
