@@ -431,6 +431,9 @@ int save_game(ChessGame *game, const char *username, const char *db_filename) {
     if (strpbrk(username, " ") != NULL) {
         return -1;
     }
+    if ((int)strlen(username) == 0) {
+        return -1;
+    }
     FILE *save;
     save = fopen(db_filename, "a");
     if (save == NULL) {
