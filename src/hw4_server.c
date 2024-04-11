@@ -1,5 +1,4 @@
 #include "hw4.h"
-#include "errno.h"
 
 int main() {
     int listenfd, connfd;
@@ -52,27 +51,29 @@ int main() {
     display_chessboard(&game);
     while (1) {
         char received[BUFFER_SIZE];
-        int read_result = read(listenfd, received, BUFFER_SIZE);
-        printf("%s\n", received);
+        int read_result = read(connfd, received, BUFFER_SIZE);
         if (read_result <= 0) {
-            printf("%d\n", errno);
             printf("[Server] read() failed.\n");
             break;
         }
-        printf("[Server] received from client: %s", received);
-        int cmd_result = receive_command(&game, received, listenfd, false);
+        int cmd_result = receive_command(&game, received, connfd, true);
         if (cmd_result == COMMAND_FORFEIT) {
             printf("[Server] client forfeiting...\n");
+            printf("[Server] shutting down...\n");
+            close(connfd);
+            close(listenfd);
+            return 0;
             break;
         }
+        display_chessboard(&game);
         int serverValidInput = 0;
         char message[BUFFER_SIZE];
         while(serverValidInput == 0) {
-            printf("Enter a message for the client: ");
+            printf("\nEnter a message for the client: ");
             fgets(message, BUFFER_SIZE, stdin);
             message[strlen(message)-1] = '\0';
-            cmd_result = send_command(&game, message, listenfd, false);
-            if (cmd_result == COMMAND_ERROR || cmd_result == COMMAND_UNKNOWN) {
+            cmd_result = send_command(&game, message, connfd, false);
+            if (cmd_result == COMMAND_ERROR || cmd_result == COMMAND_UNKNOWN || cmd_result == COMMAND_DISPLAY) {
                 continue;
             }
             else if (cmd_result == COMMAND_FORFEIT) {
@@ -86,8 +87,10 @@ int main() {
         if (serverValidInput == 0) {
             break;
         }
+        display_chessboard(&game);
     }
     printf("[Server] shutting down...\n");
+    close(connfd);
     close(listenfd);
     return 0;
 }

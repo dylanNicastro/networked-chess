@@ -387,6 +387,7 @@ int send_command(ChessGame *game, const char *message, int socketfd, bool is_cli
         int num;
         if (sscanf(arg, "%s %d", name, &num) != 2) return COMMAND_ERROR;
         if (load_game(game, name, "game_database.txt", num) != 0) return COMMAND_ERROR;
+        send(socketfd, message, strlen(message), 0);
         return COMMAND_LOAD;
     }
     else if (strcmp(command, "save") == 0) {
@@ -402,6 +403,7 @@ int receive_command(ChessGame *game, const char *message, int socketfd, bool is_
     sscanf(message, "/%s %[^\n]s", command, arg);
     //printf("%s\n%s\n", command, arg);
     if (strcmp(command, "move") == 0) {
+        printf("Move\n");
         ChessMove new_move;
         if (parse_move(arg, &new_move) != 0) return COMMAND_ERROR;
         if (make_move(game, &new_move, is_client, false) != 0) return COMMAND_ERROR;

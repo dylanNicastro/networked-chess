@@ -36,15 +36,17 @@ int main() {
     initialize_game(&game);
     display_chessboard(&game);
     while (1) {
+        char received[BUFFER_SIZE];
         char message[BUFFER_SIZE];
         int cmd_result;
         int clientValidInput = 0;
         while(clientValidInput == 0) {
-            printf("Enter a message for the server: ");
+            printf("\nEnter a message for the server: ");
             fgets(message, BUFFER_SIZE, stdin);
             message[strlen(message)-1] = '\0';
             cmd_result = send_command(&game, message, connfd, true);
-            if (cmd_result == COMMAND_ERROR || cmd_result == COMMAND_UNKNOWN || cmd_result == COMMAND_SAVE) {
+            printf("cmd_result: %d\n", cmd_result);
+            if (cmd_result == COMMAND_ERROR || cmd_result == COMMAND_UNKNOWN || cmd_result == COMMAND_SAVE || cmd_result == COMMAND_DISPLAY) {
                 continue;
             }
             else if (cmd_result == COMMAND_FORFEIT) {
@@ -58,15 +60,15 @@ int main() {
         if (clientValidInput == 0) {
             break;
         }
-        char received[BUFFER_SIZE];
-        memset(received, 0, BUFFER_SIZE);
+        display_chessboard(&game);
         int read_result = read(connfd, received, BUFFER_SIZE);
         if (read_result <= 0) {
             printf("[Client] read() failed.\n");
             break;
         }
-        printf("[Client] received from server: %s", received);
-        cmd_result = receive_command(&game, received, connfd, true);
+        printf("[Client] received from server: %s\n", received);
+        cmd_result = receive_command(&game, received, connfd, false);
+        display_chessboard(&game);
         if (cmd_result == COMMAND_FORFEIT) {
             printf("[Client] server forfeiting...\n");
             break;
