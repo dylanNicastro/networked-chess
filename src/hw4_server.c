@@ -51,6 +51,7 @@ int main() {
     display_chessboard(&game);
     while (1) {
         char received[BUFFER_SIZE];
+        memset(received, 0, BUFFER_SIZE);
         int read_result = read(connfd, received, BUFFER_SIZE);
         if (read_result <= 0) {
             printf("[Server] read() failed.\n");
@@ -59,15 +60,12 @@ int main() {
         int cmd_result = receive_command(&game, received, connfd, true);
         if (cmd_result == COMMAND_FORFEIT) {
             printf("[Server] client forfeiting...\n");
-            printf("[Server] shutting down...\n");
-            close(connfd);
-            close(listenfd);
-            return 0;
             break;
         }
         display_chessboard(&game);
         int serverValidInput = 0;
         char message[BUFFER_SIZE];
+        memset(message, 0, BUFFER_SIZE);
         while(serverValidInput == 0) {
             printf("\nEnter a message for the client: ");
             fgets(message, BUFFER_SIZE, stdin);
@@ -92,5 +90,6 @@ int main() {
     printf("[Server] shutting down...\n");
     close(connfd);
     close(listenfd);
+    exit(EXIT_SUCCESS);
     return 0;
 }

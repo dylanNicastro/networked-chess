@@ -293,9 +293,6 @@ int parse_move(const char *move, ChessMove *parsed_move) {
 }
 
 int make_move(ChessGame *game, ChessMove *move, bool is_client, bool validate_move) {
-    if (is_client == (*game).currentPlayer) {
-        return MOVE_OUT_OF_TURN;
-    }
     int src_row = (*move).startSquare[1]-'0'-1;
     src_row = 7-src_row;
     int dest_row = (*move).endSquare[1]-'0'-1;
@@ -309,6 +306,9 @@ int make_move(ChessGame *game, ChessMove *move, bool is_client, bool validate_mo
 
     if (validate_move == true) {
         // is_client == true/1 means white is trying to play, currentPlayer == 1 means black's turn
+        if (is_client == (*game).currentPlayer) {
+            return MOVE_OUT_OF_TURN;
+        }
         if ((*game).chessboard[src_row][src_col] == '.') {
             return MOVE_NOTHING;
         }
@@ -387,7 +387,6 @@ int send_command(ChessGame *game, const char *message, int socketfd, bool is_cli
         int num;
         if (sscanf(arg, "%s %d", name, &num) != 2) return COMMAND_ERROR;
         if (load_game(game, name, "game_database.txt", num) != 0) return COMMAND_ERROR;
-        send(socketfd, message, strlen(message), 0);
         return COMMAND_LOAD;
     }
     else if (strcmp(command, "save") == 0) {
@@ -403,7 +402,6 @@ int receive_command(ChessGame *game, const char *message, int socketfd, bool is_
     sscanf(message, "/%s %[^\n]s", command, arg);
     //printf("%s\n%s\n", command, arg);
     if (strcmp(command, "move") == 0) {
-        printf("Move\n");
         ChessMove new_move;
         if (parse_move(arg, &new_move) != 0) return COMMAND_ERROR;
         if (make_move(game, &new_move, is_client, false) != 0) return COMMAND_ERROR;

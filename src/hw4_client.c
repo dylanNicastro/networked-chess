@@ -37,7 +37,9 @@ int main() {
     display_chessboard(&game);
     while (1) {
         char received[BUFFER_SIZE];
+        memset(received, 0, BUFFER_SIZE);
         char message[BUFFER_SIZE];
+        memset(message, 0, BUFFER_SIZE);
         int cmd_result;
         int clientValidInput = 0;
         while(clientValidInput == 0) {
@@ -83,5 +85,6 @@ int main() {
     fprintf(temp, "%s", fen);
     fclose(temp);
     close(connfd);
+    exit(EXIT_SUCCESS);
     return 0;
 }
