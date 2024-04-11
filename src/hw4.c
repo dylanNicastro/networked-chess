@@ -293,6 +293,9 @@ int parse_move(const char *move, ChessMove *parsed_move) {
 }
 
 int make_move(ChessGame *game, ChessMove *move, bool is_client, bool validate_move) {
+    if (is_client == (*game).currentPlayer) {
+        return MOVE_OUT_OF_TURN;
+    }
     int src_row = (*move).startSquare[1]-'0'-1;
     src_row = 7-src_row;
     int dest_row = (*move).endSquare[1]-'0'-1;
@@ -306,9 +309,6 @@ int make_move(ChessGame *game, ChessMove *move, bool is_client, bool validate_mo
 
     if (validate_move == true) {
         // is_client == true/1 means white is trying to play, currentPlayer == 1 means black's turn
-        if (is_client == (*game).currentPlayer) {
-            return MOVE_OUT_OF_TURN;
-        }
         if ((*game).chessboard[src_row][src_col] == '.') {
             return MOVE_NOTHING;
         }

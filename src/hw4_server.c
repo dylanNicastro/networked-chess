@@ -1,4 +1,5 @@
 #include "hw4.h"
+#include "errno.h"
 
 int main() {
     int listenfd, connfd;
@@ -46,10 +47,47 @@ int main() {
 
     INFO("Server accepted connection");
 
+    ChessGame game;
+    initialize_game(&game);
+    display_chessboard(&game);
     while (1) {
-        // Fill this in
+        char received[BUFFER_SIZE];
+        int read_result = read(listenfd, received, BUFFER_SIZE);
+        printf("%s\n", received);
+        if (read_result <= 0) {
+            printf("%d\n", errno);
+            printf("[Server] read() failed.\n");
+            break;
+        }
+        printf("[Server] received from client: %s", received);
+        int cmd_result = receive_command(&game, received, listenfd, false);
+        if (cmd_result == COMMAND_FORFEIT) {
+            printf("[Server] client forfeiting...\n");
+            break;
+        }
+        int serverValidInput = 0;
+        char message[BUFFER_SIZE];
+        while(serverValidInput == 0) {
+            printf("Enter a message for the client: ");
+            fgets(message, BUFFER_SIZE, stdin);
+            message[strlen(message)-1] = '\0';
+            cmd_result = send_command(&game, message, listenfd, false);
+            if (cmd_result == COMMAND_ERROR || cmd_result == COMMAND_UNKNOWN) {
+                continue;
+            }
+            else if (cmd_result == COMMAND_FORFEIT) {
+                printf("[Server] server forfeiting...\n");
+                break;
+            }
+            else {
+                serverValidInput = 1;
+            }
+        }
+        if (serverValidInput == 0) {
+            break;
+        }
     }
-
+    printf("[Server] shutting down...\n");
     close(listenfd);
     return 0;
 }
