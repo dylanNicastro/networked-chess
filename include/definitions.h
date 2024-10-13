@@ -1,6 +1,3 @@
-#ifndef HW4_H
-#define HW4_H
-
 #include <ctype.h>
 #include <stdbool.h>
 #include <stdio.h>
@@ -76,5 +73,3 @@ bool is_valid_king_move(int src_row, int src_col, int dest_row, int dest_col);
 bool is_valid_move(char piece, int src_row, int src_col, int dest_row, int dest_col, ChessGame *game);
 
 void display_chessboard(ChessGame *game);
-
-#endif

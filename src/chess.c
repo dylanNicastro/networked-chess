@@ -1,4 +1,4 @@
-#include "hw4.h"
+#include "definitions.h"
 
 void initialize_game(ChessGame *game) {
     (*game).moveCount = 0;
