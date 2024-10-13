@@ -10,8 +10,6 @@
 #include <arpa/inet.h>
 #include <sys/socket.h>
 
-#define INFO(...) fprintf(stderr, "[          ] [ INFO ] "); fprintf(stderr, __VA_ARGS__); fprintf(stderr, "\n"); fflush(stderr)
-
 #define PORT 8080
 #define BUFFER_SIZE 1024
 
